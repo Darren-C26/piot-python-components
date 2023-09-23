@@ -10,6 +10,8 @@
 # Programming the Internet of Things project.
 # 
 
+from programmingtheiot.cda.system.SystemPerformanceManager import SystemPerformanceManager
+
 import logging
 
 from time import sleep
@@ -30,6 +32,8 @@ class ConstrainedDeviceApp():
 		"""
 		logging.info("Initializing CDA...")
 		
+		self.sysPerfMgr = SystemPerformanceManager()
+		
 		# TODO: implementation here
 
 	def startApp(self):
@@ -40,6 +44,7 @@ class ConstrainedDeviceApp():
 		logging.info("Starting CDA...")
 		
 		# TODO: implementation here
+		self.sysPerfMgr.startManager()
 		
 		logging.info("CDA started.")
 
@@ -51,6 +56,7 @@ class ConstrainedDeviceApp():
 		logging.info("CDA stopping...")
 		
 		# TODO: implementation here
+		self.sysPerfMgr.stopManager()
 		
 		logging.info("CDA stopped with exit code %s.", str(code))
 		
