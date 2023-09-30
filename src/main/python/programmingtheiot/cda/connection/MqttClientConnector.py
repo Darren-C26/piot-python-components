@@ -8,7 +8,7 @@
 #
 
 import logging
-import paho.mqtt.client as mqttClient
+#import paho.mqtt.client as mqttClient
 
 import programmingtheiot.common.ConfigConst as ConfigConst
 
