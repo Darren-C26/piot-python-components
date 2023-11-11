@@ -17,7 +17,16 @@ from programmingtheiot.data.ActuatorData import ActuatorData
 from coapthon import defines
 from coapthon.resources.resource import Resource
 
-class UpdateActuatorResourceHandler(Resource):
+class UpdateActuatorResourceHandler():
+	"""
+	Standard resource that will handle an incoming actuation command,
+	and return the command response.
+	
+	NOTE: Your implementation will likely need to extend from the selected
+	CoAP library's resource base class.
+	
+	"""
+
 	def __init__(self, dataMsgListener: IDataMessageListener = None):
 		self.dataMsgListener = dataMsgListener
 		self.dataUtil = DataUtil()
@@ -35,7 +44,7 @@ class UpdateActuatorResourceHandler(Resource):
 			response.max_age = self.pollCycles
 			
 		return self, response
-	
+
 	def _createResponse(self, response = None, data: ActuatorData = None) -> str:
 		actuatorResponseData = self.dataMsgListener.handleActuatorCommandMessage(data)
 		
@@ -55,4 +64,5 @@ class UpdateActuatorResourceHandler(Resource):
 		jsonData = self.dataUtil.actuatorDataToJson(actuatorResponseData)
 	
 		return (defines.Content_types["application/json"], jsonData)
+	
 	
