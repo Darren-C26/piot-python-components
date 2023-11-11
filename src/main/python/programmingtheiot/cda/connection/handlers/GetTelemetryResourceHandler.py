@@ -12,22 +12,27 @@ import logging
 import programmingtheiot.common.ConfigConst as ConfigConst
 
 from programmingtheiot.common.ConfigUtil import ConfigUtil
-from programmingtheiot.common.IDataMessageListener import IDataMessageListener
-from programmingtheiot.common.ISystemPerformanceDataListener import ISystemPerformanceDataListener 
 from programmingtheiot.common.ITelemetryDataListener import ITelemetryDataListener
 
+from programmingtheiot.common.ISystemPerformanceDataListener import ISystemPerformanceDataListener 
+from programmingtheiot.common.IDataMessageListener import IDataMessageListener
+
 from programmingtheiot.data.DataUtil import DataUtil
-
-# NOTE: the next import is only needed for GetTelemetryResourceHandler
 from programmingtheiot.data.SensorData import SensorData
-
-# NOTE: the next import is only needed for GetSystemPerformanceResourceHandler
-from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
 
 from coapthon import defines
 from coapthon.resources.resource import Resource
 
 class GetTelemetryResourceHandler(Resource, ITelemetryDataListener):
+	"""
+	Observable resource that will collect telemetry based on the given
+	name from the data message listener implementation.
+	
+	NOTE: Your implementation will likely need to extend from the selected
+	CoAP library's observable resource base class.
+	
+	"""
+
 	def __init__(self, name: str = ConfigConst.SENSOR_MSG, coap_server = None):
 		super(GetTelemetryResourceHandler, self).__init__( \
 			name, coap_server, visible = True, observable = True, allow_children = True)
@@ -45,7 +50,10 @@ class GetTelemetryResourceHandler(Resource, ITelemetryDataListener):
 		self.payload = "GetSensorData"
 		
 	def onSensorDataUpdate(self, data: SensorData = None) -> bool:
-		pass
+		logging.info("SensorData: " + str(data))
+		
+		return True
+	
 	
 	def render_GET_advanced(self, request, response):
 		if request:
@@ -64,4 +72,4 @@ class GetTelemetryResourceHandler(Resource, ITelemetryDataListener):
 			self.changed = False
 				
 		return self, response
-	
+		
