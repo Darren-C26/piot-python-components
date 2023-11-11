@@ -11,6 +11,7 @@ import logging
 
 from programmingtheiot.cda.connection.CoapClientConnector import CoapClientConnector
 from programmingtheiot.cda.connection.MqttClientConnector import MqttClientConnector
+
 from programmingtheiot.cda.connection.CoapServerAdapter import CoapServerAdapter
 
 from programmingtheiot.cda.system.ActuatorAdapterManager import ActuatorAdapterManager
@@ -18,6 +19,8 @@ from programmingtheiot.cda.system.SensorAdapterManager import SensorAdapterManag
 from programmingtheiot.cda.system.SystemPerformanceManager import SystemPerformanceManager
 
 import programmingtheiot.common.ConfigConst as ConfigConst
+import json
+
 from programmingtheiot.common.ConfigUtil import ConfigUtil
 
 from programmingtheiot.common.IDataMessageListener import IDataMessageListener
@@ -30,10 +33,15 @@ from programmingtheiot.data.DataUtil import DataUtil
 from programmingtheiot.data.ActuatorData import ActuatorData
 from programmingtheiot.data.SensorData import SensorData
 from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
+from pickle import TRUE
 
 
 class DeviceDataManager(IDataMessageListener):
+	"""
+	Shell representation of class for student implementation.
 	
+	"""
+		
 	def __init__(self):
 		self.configUtil = ConfigUtil()
 		
@@ -53,7 +61,16 @@ class DeviceDataManager(IDataMessageListener):
 		self.actuatorAdapterMgr = None
 		
 		# NOTE: The following aren't used until Part III but should be declared now
+		self.enableMqttClient = \
+				self.configUtil.getBoolean( \
+							section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_MQTT_CLIENT_KEY)
+				
 		self.mqttClient         = None
+		
+		if self.enableMqttClient:
+			self.mqttClient = MqttClientConnector()
+			self.mqttClient.setDataMessageListener(self)
+	
 		self.coapClient         = None
 		self.coapServer         = None
 		
@@ -82,21 +99,12 @@ class DeviceDataManager(IDataMessageListener):
 		self.triggerHvacTempCeiling   = \
 			self.configUtil.getFloat( \
 				ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY);
-		
-		self.enableMqttClient = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_MQTT_CLIENT_KEY)
-		
-		self.mqttClient = None
-		
-		if self.enableMqttClient:
-			self.mqttClient = MqttClientConnector()
-			self.mqttClient.setDataMessageListener(self)
-			
+				
+				
 		self.enableCoapServer = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_COAP_SERVER_KEY)
-		
+				self.configUtil.getBoolean( \
+						section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_COAP_SERVER_KEY)
+
 		if self.enableCoapServer:
 			self.coapServer = CoapServerAdapter(dataMsgListener = self)
 		
@@ -248,14 +256,15 @@ class DeviceDataManager(IDataMessageListener):
 		if self.sensorAdapterMgr:
 			self.sensorAdapterMgr.startManager()
 			
-		logging.info("Started DeviceDataManager.")
-		
 		if self.mqttClient:
 			self.mqttClient.connectClient()
 			self.mqttClient.subscribeToTopic(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE, callback = None, qos = ConfigConst.DEFAULT_QOS)
 			
+			
 		if self.coapServer:
 			self.coapServer.startServer()
+	
+		logging.info("Started DeviceDataManager.")
 		
 	def stopManager(self):
 		logging.info("Stopping DeviceDataManager...")
@@ -269,13 +278,11 @@ class DeviceDataManager(IDataMessageListener):
 		if self.mqttClient:
 			self.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE)
 			self.mqttClient.disconnectClient()
-		
+			
 		if self.coapServer:
 			self.coapServer.stopServer()
-		
+			
 		logging.info("Stopped DeviceDataManager.")
-		
-		
 		
 	def _handleIncomingDataAnalysis(self, msg: str):
 		"""
@@ -285,9 +292,10 @@ class DeviceDataManager(IDataMessageListener):
 		2) Convert msg: Use DataUtil to convert if appropriate.
 		3) Act on msg: Determine what - if any - action is required, and execute.
 		"""
-		logging.debug("The method _handleIncomingDataAnalysis was called.")
+		logging.debug("Method _handleIncomingDataAnalysis has been called")
 				
-		if (msg == ActuatorData() and "provenance" in self.data):
+		#was "provenance" in data before for some reason
+		if (msg == ActuatorData() and "provenance" in msg):
 			actuator_data = DataUtil().jsonToActuatorData(self, msg)
 			return self.actuatorAdapterMgr.sendActuatorCommand(actuator_data)
 
@@ -333,7 +341,7 @@ class DeviceDataManager(IDataMessageListener):
 		1) Check connection: Is there a client connection configured (and valid) to a remote MQTT or CoAP server?
 		2) Act on msg: If # 1 is true, send message upstream using one (or both) client connections.
 		"""
-		logging.debug("The method _handleUpstreamTransmission was called.")
+		logging.debug("Method _handleIncomingDataAnalysis has been called")
 		
 		if (msg == SensorData() or msg == SystemPerformanceData()):
 			return True
