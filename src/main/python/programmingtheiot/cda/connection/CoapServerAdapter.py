@@ -7,16 +7,14 @@
 # Copyright (c) 2020 by Andrew D. King
 # 
 
+import traceback
 import logging
 
 from threading import Thread
 from time import sleep
 
-import traceback
-
 from coapthon.server.coap import CoAP
 from coapthon.resources.resource import Resource
-
 
 import programmingtheiot.common.ConfigConst as ConfigConst
 
@@ -45,9 +43,39 @@ class CoapServerAdapter():
 		
 		self.coapServer     = None
 		self.coapServerTask = None
-				
+		
+		# NOTE: the self.rootResource = None only used for aiocoap
+		self.rootResource   = None
+		
 		# NOTE: the self.listenTimeout = 30 only used for CoAPthon3
 		self.listenTimeout = 30
+		
+		try:
+			self.coapServer = CoAP(server_address = (self.host, self.port))
+			
+			self.addResource( \
+				resourcePath = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE, \
+				endName = ConfigConst.HUMIDIFIER_ACTUATOR_NAME, \
+				resource = UpdateActuatorResourceHandler(dataMsgListener = self.dataMsgListener))
+				
+			# TODO: add other actuator resource handlers (for HVAC, etc.)
+			
+			sysPerfDataListener = GetSystemPerformanceResourceHandler()
+			
+			self.addResource( \
+				resourcePath = ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, \
+				resource = sysPerfDataListener)
+			
+			# TODO: add other telemetry resource handlers (for SensorData)
+			
+			# TODO: register the callbacks with the data message listener instance
+			
+			logging.info("Created CoAP server with default resources.")
+		except Exception as e:
+			traceback.print_exception(type(e), e, e.__traceback__)
+			
+			
+			logging.warning("Failed to create CoAP server.")
 		
 		logging.info("CoAP server configured for host and port: coap://%s:%s", self.host, str(self.port))
 		
@@ -108,40 +136,17 @@ class CoapServerAdapter():
 		else:
 			logging.warn("CoAP server not yet initialized (shouldn't happen).")
 	
+	def setDataMessageListener(self, listener: IDataMessageListener = None) -> bool:
+		pass
+	
+	
+	def _initServer(self):
+		pass
+		
 	def _runServer(self):
 		try:
 			self.coapServer.listen(self.listenTimeout)
 		except Exception as e:
 			traceback.print_exception(type(e), e, e.__traceback__)
 			logging.warn("Failed to run server.")
-	
-	def setDataMessageListener(self, listener: IDataMessageListener = None) -> bool:
-		pass
-	
-	def _initServer(self):
-		pass
-  # try:
-  # 	self.coapServer = CoAP(server_address = (self.host, self.port))
-  #
-  # 	self.addResource( \
-  # 		resourcePath = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE, \
-  # 		endName = ConfigConst.HUMIDIFIER_ACTUATOR_NAME, \
-  # 		resource = UpdateActuatorResourceHandler(dataMsgListener = self.dataMsgListener))
-  #
-  # 	# TODO: add other actuator resource handlers (for HVAC, etc.)
-  #
-  # 	sysPerfDataListener = GetSystemPerformanceResourceHandler()
-  #
-  # 	self.addResource( \
-  # 		resourcePath = ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, \
-  # 		resource = sysPerfDataListener)
-  #
-  # 	# TODO: add other telemetry resource handlers (for SensorData)
-  #
-  # 	# TODO: register the callbacks with the data message listener instance
-  #
-  # 	logging.info("Created CoAP server with default resources.")
-  # except Exception as e:
-  # 	traceback.print_exception(type(e), e, e.__traceback__)
-  # 	logging.warning("Failed to create CoAP server.")
-	
+
