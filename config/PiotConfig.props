@@ -12,8 +12,8 @@
 #
 [Mqtt.GatewayService]
 credFile       = ./cred/PiotMqttLocalCred.props
-certFile       = ./cert/PiotMqttLocalCertFile.pem
-host           = localhost
+certFile       = C:/Program Files/mosquitto/ca.crt
+host           = 127.0.0.1
 port           = 1883
 securePort     = 8883
 defaultQoS     = 0
@@ -42,7 +42,7 @@ enableEmulator   = False
 enableSenseHAT   = False
 enableMqttClient = True
 enableCoapServer = False
-enableCoapClient = True
+enableCoapClient = False
 enableSystemPerformance = True
 enableSensing    = True
 enableLogging    = True
@@ -77,12 +77,3 @@ streamFps           =   30
 imageFileExt        = .png
 videoFileExt        = .avi
 minMotionPixelsDiff = 10000
-
-#
-# Persistence client configuration information
-#
-[Data.GatewayService]
-credFile = ./cred/PiotPersistenceCred.props
-host = localhost
-port = 6379
-enableCrypt = False
